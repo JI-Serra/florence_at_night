@@ -1,9 +1,6 @@
 # Dependencias
 node_modules/
 
-# Build (se genera con npm run build en el servidor)
-dist/
-
 # Variables de entorno y credenciales
 .env
 .env.local
