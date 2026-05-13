@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Book Your Table — Florence at Night</title>
+    <meta
+      name="description"
+      content="Reserve your VIP table or guest list spot at Florence at Night's partner clubs. Secure your place in the best nightlife experience in Florence."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <style>
+      /* ─── BOOKING PAGE OVERRIDES ───────────────────────────── */
+      html,
+      body {
+        cursor: default !important;
+        padding-bottom: 0;
+      }
+      /* Restore native cursors since we don't load the custom JS cursor here */
+      a,
+      button,
+      select,
+      .submit-btn,
+      .event-card,
+      .bv-side-cell,
+      .back-link {
+        cursor: pointer !important;
+      }
+      input[type="text"],
+      input[type="number"],
+      input[type="date"],
+      .form-field {
+        cursor: text !important;
+      }
+
+      .cursor,
+      .cursor-ring {
+        display: none !important;
+      }
+
+      /* ─── BOOKING HERO ─────────────────────────────────────── */
+      .booking-hero {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 7rem 1.5rem 4rem;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* animated gradient background */
+      .booking-hero-bg {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          -45deg,
+          var(--black),
+          #1a1a1a,
+          rgba(223, 174, 64, 0.1),
+          rgba(240, 237, 230, 0.08),
+          var(--black)
+        );
+        background-size: 400% 400%;
+        animation: gradientNight 18s ease infinite;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      /* faint "BOOK" watermark */
+      .booking-hero-watermark {
+        position: absolute;
+        right: -4rem;
+        top: 50%;
+        transform: translateY(-50%) rotate(90deg);
+        font-family: "Bebas Neue", sans-serif;
+        font-size: clamp(8rem, 20vw, 22rem);
+        color: rgba(223, 174, 64, 0.03);
+        letter-spacing: 0.1em;
+        pointer-events: none;
+        white-space: nowrap;
+        z-index: 0;
+        user-select: none;
+      }
+
+      /* ─── MOBILE BACKGROUND VIDEO LAYER ───────────────────── */
+      /* Full-bleed video behind everything, only shown on mobile */
+      .booking-bg-video-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 1; /* above gradient bg, below content */
+        overflow: hidden;
+        pointer-events: none;
+        /* Hidden on desktop via media query below */
+      }
+
+      .booking-bg-video-layer video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.38; /* more party presence */
+        display: block;
+      }
+
+      /* Lighter overlay so video breathes more */
+      .booking-bg-video-layer::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(
+            ellipse at 50% 50%,
+            rgba(223, 174, 64, 0.04),
+            transparent 70%
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(6, 6, 6, 0.6) 0%,
+            rgba(6, 6, 6, 0.25) 40%,
+            rgba(6, 6, 6, 0.6) 100%
+          );
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      /* Hide mobile video bg on desktop — side columns replace it */
+      @media (min-width: 900px) {
+        .booking-bg-video-layer {
+          display: none;
+        }
+      }
+
+      /* ─── LAYOUT ───────────────────────────────────────────── */
+      .booking-layout {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        max-width: 1400px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        align-items: start;
+      }
+
+      @media (min-width: 900px) {
+        .booking-layout {
+          grid-template-columns: 1fr 480px 1fr;
+          gap: 1.5rem;
+          align-items: center;
+        }
+      }
+
+      /* ─── SIDE VIDEO COLUMNS (desktop only) ────────────────── */
+      .booking-videos-left,
+      .booking-videos-right {
+        display: none; /* hidden on mobile */
+      }
+
+      @media (min-width: 900px) {
+        .booking-videos-left,
+        .booking-videos-right {
+          display: grid;
+          grid-template-rows: 220px 220px;
+          gap: 4px;
+        }
+      }
+
+      .bv-side-cell {
+        background: var(--mid);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(223, 174, 64, 0.06);
+        transition: border-color 0.4s;
+      }
+      .bv-side-cell:hover {
+        border-color: rgba(223, 174, 64, 0.2);
+      }
+
+      .bv-side-cell video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+        opacity: 0.7;
+        transition:
+          opacity 0.4s,
+          transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .bv-side-cell:hover video {
+        opacity: 1;
+        transform: scale(1.05);
+      }
+
+      .bv-side-cell::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to top,
+          rgba(6, 6, 6, 0.5),
+          transparent 50%
+        );
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .bv-side-label {
+        position: absolute;
+        bottom: 0.8rem;
+        left: 0.8rem;
+        font-family: "Space Mono", monospace;
+        font-size: 0.55rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--acid);
+        opacity: 0;
+        z-index: 2;
+        transition: opacity 0.3s;
+      }
+      .bv-side-cell:hover .bv-side-label {
+        opacity: 0.8;
+      }
+
+      /* ─── FORM PANEL ──────────────────────────────────────── */
+      .booking-panel {
+        background: rgba(13, 13, 13, 0.52);
+        border: 1px solid rgba(240, 237, 230, 0.1);
+        padding: 2.5rem 2rem;
+        position: relative;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+
+      /* gold accent line top */
+      .booking-panel::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(to right, var(--acid), transparent);
+      }
+
+      .booking-eyebrow {
+        font-family: "Space Mono", monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.4em;
+        text-transform: uppercase;
+        color: var(--acid);
+        opacity: 0.8;
+        margin-bottom: 1rem;
+      }
+
+      .booking-title {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: clamp(2.4rem, 5vw, 4.5rem);
+        line-height: 0.95;
+        margin-bottom: 0.6rem;
+      }
+      .booking-title em {
+        font-style: normal;
+        color: var(--acid);
+      }
+
+      .booking-sub {
+        font-size: 0.85rem;
+        font-weight: 300;
+        opacity: 0.45;
+        line-height: 1.6;
+        margin-bottom: 2.2rem;
+        max-width: 380px;
+      }
+
+      /* back link */
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-family: "Space Mono", monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--white);
+        opacity: 0.4;
+        text-decoration: none;
+        margin-bottom: 2.5rem;
+        transition:
+          opacity 0.2s,
+          color 0.2s;
+      }
+      .back-link:hover {
+        opacity: 1;
+        color: var(--acid);
+      }
+      .back-link::before {
+        content: "←";
+        font-size: 0.9rem;
+      }
+
+      /* Booking success state */
+      .booking-success {
+        display: none;
+        text-align: center;
+        padding: 2rem 0;
+      }
+      .booking-success .check-icon {
+        font-size: 3rem;
+        color: var(--acid);
+        margin-bottom: 1rem;
+        display: block;
+      }
+      .booking-success h3 {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 2rem;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+      }
+      .booking-success p {
+        font-size: 0.85rem;
+        opacity: 0.5;
+        font-weight: 300;
+      }
+
+      /* ─── NAV OVERRIDES ───────────────────────────────────── */
+      .booking-nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.2rem 1.5rem;
+      }
+      .booking-nav::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to bottom,
+          rgba(6, 6, 6, 0.95),
+          transparent
+        );
+        pointer-events: none;
+      }
+      .booking-nav .nav-logo {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 1.8rem;
+        letter-spacing: 0.3em;
+        color: var(--acid);
+        position: relative;
+        z-index: 1;
+        text-decoration: none;
+      }
+      .booking-nav .nav-back {
+        font-family: "Space Mono", monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.15em;
+        color: var(--white);
+        opacity: 0.5;
+        text-decoration: none;
+        text-transform: uppercase;
+        position: relative;
+        z-index: 1;
+        transition:
+          opacity 0.2s,
+          color 0.2s;
+      }
+      .booking-nav .nav-back:hover {
+        opacity: 1;
+        color: var(--acid);
+      }
+
+      @media (min-width: 768px) {
+        .booking-nav {
+          padding: 1.5rem 3rem;
+        }
+      }
+
+      /* Hide sticky mobile CTA from main page styles */
+      .sticky-cta-mobile {
+        display: none !important;
+      }
+
+      /* ─── EVENT BANNER (flyer full-width, pegado al top del panel) */
+      .club-event-banner {
+        position: relative;
+        width: 100%;
+        margin-bottom: 2rem;
+        height: 210px;
+        overflow: hidden;
+        background: var(--mid);
+        flex-shrink: 0;
+      }
+
+      /* ─── WEEKLY FLYER (rellena el banner) ──────────────── */
+      .club-flyer-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        opacity: 0;
+        transform: scale(1.05);
+        transition:
+          opacity 0.5s ease,
+          transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        display: block;
+      }
+      .club-flyer-img.active {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      /* degradado inferior para que el logo y el día lean bien */
+      .club-banner-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to bottom,
+          transparent 30%,
+          rgba(6, 6, 6, 0.55) 65%,
+          rgba(6, 6, 6, 0.92) 100%
+        );
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      /* fila inferior: día (izq) + logo (der) */
+      .club-banner-bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        padding: 0.9rem 1.4rem;
+      }
+
+      /* back-link superpuesto en la esquina superior del banner */
+      .club-banner-back {
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 3;
+      }
+
+      /* ─── DÍA dentro del banner ──────────────────────────── */
+      .club-days-label {
+        font-family: "Space Mono", monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.35em;
+        text-transform: uppercase;
+        color: var(--acid);
+        min-height: 1em;
+        margin: 0;
+        opacity: 0;
+        transform: translateY(5px);
+        transition:
+          opacity 0.35s ease,
+          transform 0.35s ease;
+      }
+      .club-days-label.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* ─── LOGO dentro del banner (pequeño, derecha) ──────── */
+      .club-logo-zone {
+        position: relative;
+        width: 90px;
+        height: 44px;
+        flex-shrink: 0;
+      }
+
+      .club-logo-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: right center;
+        filter: brightness(0) invert(1);
+        opacity: 0;
+        transform: scale(0.88);
+        transition:
+          opacity 0.4s ease,
+          transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+      }
+      .club-logo-img.active {
+        opacity: 0.7;
+        transform: scale(1);
+        pointer-events: auto;
+      }
+
+      /* separador ya no es necesario, el banner lo reemplaza */
+      .club-logo-divider {
+        display: none !important;
+      }
+
+      /* Date input color fix */
+      input[type="date"] {
+        color-scheme: dark;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- NAV -->
+    <nav class="booking-nav">
+      <a href="./index.html" class="nav-logo">FAN</a>
+      <a href="./index.html" class="nav-back">← Back to schedule</a>
+    </nav>
+
+    <!-- MAIN BOOKING SECTION -->
+    <section class="booking-hero">
+      <!-- Animated gradient bg -->
+      <div class="booking-hero-bg"></div>
+      <div class="booking-hero-watermark">BOOK</div>
+
+      <!-- MOBILE: full-bleed background video (hidden via CSS on desktop) -->
+      <div class="booking-bg-video-layer">
+        <video autoplay loop muted playsinline>
+          <source src="/2.mp4" type="video/mp4" />
+        </video>
+      </div>
+
+      <!-- THREE-COLUMN LAYOUT -->
+      <div class="booking-layout">
+        <!-- LEFT VIDEOS (desktop only, CSS hides on mobile) -->
+        <div class="booking-videos-left">
+          <div class="bv-side-cell">
+            <video autoplay loop muted playsinline>
+              <source src="/1.mp4" type="video/mp4" />
+            </video>
+            <span class="bv-side-label">Florence at Night</span>
+          </div>
+          <div class="bv-side-cell">
+            <video autoplay loop muted playsinline>
+              <source src="/2.mp4" type="video/mp4" />
+            </video>
+            <span class="bv-side-label">Florence at Night</span>
+          </div>
+        </div>
+
+        <!-- FORM PANEL (center column) -->
+        <div class="booking-panel" style="padding-top: 1.5rem; overflow: hidden;">
+          <a href="./index.html" class="back-link club-banner-back">Back to agenda</a>
+          <!-- EVENT BANNER: flyer full-width + logo & día como overlay -->
+          <div class="club-event-banner">
+            <img id="clubFlyer" class="club-flyer-img" src="" alt="Weekly flyer" />
+            <div class="club-banner-overlay"></div>
+            <div class="club-banner-bottom">
+              <div class="club-days-label" id="clubDaysLabel"></div>
+              <div class="club-logo-zone" id="clubLogoZone">
+                <img
+                  id="logo-yab"
+                  class="club-logo-img"
+                  src="/yablogo.png"
+                  alt="YAB"
+                />
+                <img
+                  id="logo-babylon"
+                  class="club-logo-img"
+                  src="/babylonlogo.png"
+                  alt="Babylon"
+                />
+                <img
+                  id="logo-space"
+                  class="club-logo-img"
+                  src="/spacelogo.png"
+                  alt="Space Club"
+                />
+                <img
+                  id="logo-xo"
+                  class="club-logo-img"
+                  src="/xologo.PNG"
+                  alt="XO Club"
+                />
+              </div>
+            </div>
+          </div>
+          <div id="clubLogoDivider" style="display:none"></div>
+
+          <div class="booking-eyebrow">VIP Reservation</div>
+          <h1 class="booking-title">Book Your<br /><em>Table</em></h1>
+          <p class="booking-sub">
+            Get exclusive access. Fill in your details and we'll confirm your
+            reservation within 24 hours.
+          </p>
+
+          <!-- FORM -->
+          <div id="bookingFormWrap">
+            <div class="form-row" style="margin-bottom: 1px">
+              <input
+                type="text"
+                id="bookName"
+                class="form-field"
+                placeholder="Name"
+                required
+              />
+              <input
+                type="text"
+                id="bookContact"
+                class="form-field"
+                placeholder="Phone / Instagram"
+                required
+              />
+            </div>
+            <select id="bookClub" class="form-select">
+              <option value="" disabled selected>Select Club</option>
+              <option value="yab">YAB (Monday)</option>
+              <option value="babylon">Babylon (Tuesday – Saturday)</option>
+              <option value="space">Space Club (Wednesday &amp; Friday)</option>
+              <option value="xo">XO Club (Thursday – Saturday)</option>
+            </select>
+            <select id="bookType" class="form-select">
+              <option value="" disabled selected>Reservation Type</option>
+              <option>VIP Table</option>
+              <option>Guest List</option>
+              <option>Large Group (10+)</option>
+            </select>
+            <input
+              type="date"
+              id="bookDate"
+              class="form-field"
+              style="margin-bottom: 1px; width: 100%"
+            />
+            <input
+              type="number"
+              id="bookGuests"
+              class="form-field"
+              placeholder="Number of guests"
+              min="1"
+              style="margin-bottom: 1px"
+            />
+            <button class="submit-btn" id="bookingSubmitBtn">
+              Secure My Spot
+            </button>
+          </div>
+
+          <!-- SUCCESS STATE -->
+          <div class="booking-success" id="bookingSuccess">
+            <span class="check-icon">✦</span>
+            <h3>Request Sent!</h3>
+            <p>
+              We'll confirm your reservation for
+              <span id="successClub"></span> via WhatsApp or Instagram within 24
+              hours.
+            </p>
+          </div>
+        </div>
+
+        <!-- RIGHT VIDEOS (desktop only) -->
+        <div class="booking-videos-right">
+          <div class="bv-side-cell">
+            <video autoplay loop muted playsinline>
+              <source src="/3.mp4" type="video/mp4" />
+            </video>
+            <span class="bv-side-label">Florence at Night</span>
+          </div>
+          <div class="bv-side-cell">
+            <video autoplay loop muted playsinline>
+              <source src="/4.mp4" type="video/mp4" />
+            </video>
+            <span class="bv-side-label">Florence at Night</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer style="background: var(--black)">
+      <div class="footer-logo">FAN</div>
+      <div class="footer-info">
+        Florence at Night<br />
+        The Ultimate Nightlife Experience<br />
+        © 2026 FAN. All rights reserved.
+      </div>
+      <div class="footer-social"><a href="#">IG</a><a href="#">TK</a></div>
+    </footer>
+
+    <script>
+      // ── Club logo switcher ───────────────────────────────
+      const logoMap = {
+        yab: document.getElementById("logo-yab"),
+        babylon: document.getElementById("logo-babylon"),
+        space: document.getElementById("logo-space"),
+        xo: document.getElementById("logo-xo"),
+      };
+      const divider = document.getElementById("clubLogoDivider");
+      const daysLabel = document.getElementById("clubDaysLabel");
+
+      // Open days per club
+      const clubDaysMap = {
+        yab: "Monday",
+        babylon: "Tuesday & Saturday",
+        space: "Wednesday & Friday",
+        xo: "Thursday & Saturday",
+      };
+
+      function showLogo(clubValue) {
+        Object.values(logoMap).forEach((img) => img.classList.remove("active"));
+        if (clubValue && logoMap[clubValue]) {
+          logoMap[clubValue].classList.add("active");
+          divider.style.display = "block";
+          // Show days label with animation
+          daysLabel.textContent = clubDaysMap[clubValue] || "";
+          // Force reflow so transition triggers
+          daysLabel.classList.remove("visible");
+          void daysLabel.offsetWidth;
+          daysLabel.classList.add("visible");
+        } else {
+          divider.style.display = "none";
+          daysLabel.classList.remove("visible");
+          daysLabel.textContent = "";
+        }
+      }
+
+      // ── Weekly flyer switcher ─────────────────────────────
+      const flyerImg = document.getElementById("clubFlyer");
+
+      // Fallback flyer per club if no day param is in the URL
+      const clubDefaultDay = {
+        yab: "mon",
+        babylon: "tue",
+        space: "fri",
+        xo: "thu",
+      };
+
+      function showFlyer(clubKey, dayKey) {
+        let src = "";
+        if (dayKey === "mon") src = "/LUNES.jpeg";
+        else if (dayKey === "tue") src = "/MARTES.jpeg";
+        else if (dayKey === "wed") src = "/MIERCOLES.jpeg";
+        else if (dayKey === "thu") src = "/JUEVES.jpeg";
+        else if (dayKey === "fri") {
+          src = clubKey === "xo" ? "/VIERNES%20XO.png" : "/VIERNES%20SPACE.jpeg";
+        }
+        else if (dayKey === "sat") src = "/Sabado.png";
+        
+        if (src) {
+          flyerImg.src = src;
+          flyerImg.classList.add("active");
+        } else {
+          flyerImg.classList.remove("active");
+        }
+      }
+
+      // ── Pre-select club from URL query param ────────────────
+      (function () {
+        const params = new URLSearchParams(window.location.search);
+        const club = params.get("club");
+        const day = params.get("day") || (club ? clubDefaultDay[club] : null);
+        const sel = document.getElementById("bookClub");
+        if (club && sel) {
+          for (let i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].value === club) {
+              sel.selectedIndex = i;
+              break;
+            }
+          }
+        }
+        // Show logo and flyer for the initial selection
+        showLogo(sel ? sel.value : "");
+        showFlyer(sel ? sel.value : "", day);
+
+        // Set min date to today
+        const dateInput = document.getElementById("bookDate");
+        if (dateInput) {
+          const today = new Date().toISOString().split("T")[0];
+          dateInput.min = today;
+          dateInput.value = today;
+        }
+      })();
+
+      // Update logo and flyer when user changes the club dropdown
+      document
+        .getElementById("bookClub")
+        .addEventListener("change", function () {
+          showLogo(this.value);
+          showFlyer(this.value, clubDefaultDay[this.value] || null);
+        });
+
+      // ── Form submit ─────────────────────────────────────────
+      document
+        .getElementById("bookingSubmitBtn")
+        .addEventListener("click", function () {
+          const name = document.getElementById("bookName").value.trim();
+          const contact = document.getElementById("bookContact").value.trim();
+          const clubSel = document.getElementById("bookClub");
+          const typeSel = document.getElementById("bookType");
+          const dateVal = document.getElementById("bookDate").value;
+          const guests = document.getElementById("bookGuests").value.trim();
+          const club = clubSel.options[clubSel.selectedIndex]?.text || "";
+          const type = typeSel.value
+            ? typeSel.options[typeSel.selectedIndex].text
+            : "";
+
+          // Validation
+          if (!name || !contact || !clubSel.value) {
+            [
+              document.getElementById("bookName"),
+              document.getElementById("bookContact"),
+              clubSel,
+            ].forEach((el) => {
+              if (!el.value) {
+                el.style.outline = "1px solid var(--acid)";
+                setTimeout(() => (el.style.outline = ""), 1500);
+              }
+            });
+            return;
+          }
+
+          // Format date nicely if provided
+          let dateStr = "";
+          if (dateVal) {
+            const d = new Date(dateVal + "T00:00:00");
+            dateStr = d.toLocaleDateString("en-GB", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            });
+          }
+
+          // Build WhatsApp message
+          const lines = [
+            "Hello! I'm writing from the Florence at Night website.",
+            "",
+            `Name: ${name}`,
+            `Contact (Phone / Instagram): ${contact}`,
+            `Club: ${club}`,
+            type ? `Reservation type: ${type}` : null,
+            dateStr ? `Date: ${dateStr}` : null,
+            guests ? `Number of guests: ${guests}` : null,
+            "",
+            "I'd like to request a reservation. Thank you!",
+          ]
+            .filter((l) => l !== null)
+            .join("\n");
+
+          const phone = "393409596084"; // +39 340 959 6084
+          const url = `https://wa.me/${phone}?text=${encodeURIComponent(lines)}`;
+
+          // Show success state
+          document.getElementById("successClub").textContent = club;
+          document.getElementById("bookingFormWrap").style.display = "none";
+          document.getElementById("bookingSuccess").style.display = "block";
+
+          // Open WhatsApp
+          window.open(url, "_blank");
+        });
+    </script>
+  </body>
+</html>

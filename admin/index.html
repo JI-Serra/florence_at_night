@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAN Admin — Gestión de Contenido</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --acid: #dfae40;
+      --acid2: #f0ede6;
+      --white: #f0ede6;
+      --black: #060606;
+      --dark: #0d0d0d;
+      --mid: #1a1a1a;
+      --card: #111111;
+      --border: rgba(240, 237, 230, 0.08);
+      --border-hover: rgba(223, 174, 64, 0.25);
+      --success: #2ecc71;
+      --error: #e74c3c;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── LOGIN ────────────────────────────────────────── */
+    #loginScreen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .login-box {
+      background: var(--dark);
+      border: 1px solid var(--border);
+      padding: 3rem 2.5rem;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .login-box::before {
+      content: '';
+      display: block;
+      width: 60px;
+      height: 3px;
+      background: var(--acid);
+      margin: 0 auto 2rem;
+    }
+
+    .login-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.5rem;
+      letter-spacing: 0.3em;
+      color: var(--acid);
+      margin-bottom: 0.3rem;
+    }
+
+    .login-sub {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      opacity: 0.35;
+      margin-bottom: 2.5rem;
+    }
+
+    .login-field {
+      width: 100%;
+      background: rgba(240, 237, 230, 0.04);
+      border: 1px solid var(--border);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      padding: 0.9rem 1.2rem;
+      margin-bottom: 0.5rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .login-field:focus { border-color: var(--acid); }
+    .login-field::placeholder { opacity: 0.3; }
+
+    .login-btn {
+      width: 100%;
+      margin-top: 1rem;
+      background: var(--acid);
+      color: var(--black);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.3rem;
+      letter-spacing: 0.15em;
+      padding: 0.9rem;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, letter-spacing 0.3s;
+    }
+
+    .login-btn:hover { background: var(--acid2); letter-spacing: 0.22em; }
+
+    .login-error {
+      color: var(--error);
+      font-size: 0.8rem;
+      margin-top: 1rem;
+      min-height: 1.2em;
+    }
+
+    /* ── DASHBOARD ────────────────────────────────────── */
+    #dashboard { display: none; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(6, 6, 6, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+    }
+
+    .topbar-left { display: flex; align-items: center; gap: 1rem; }
+
+    .topbar-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.6rem;
+      letter-spacing: 0.25em;
+      color: var(--acid);
+    }
+
+    .topbar-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0.35;
+      display: none;
+    }
+
+    @media (min-width: 600px) { .topbar-tag { display: inline; } }
+
+    .topbar-actions { display: flex; align-items: center; gap: 1rem; }
+
+    .topbar-link {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--white);
+      opacity: 0.4;
+      text-decoration: none;
+      transition: opacity 0.2s, color 0.2s;
+    }
+
+    .topbar-link:hover { opacity: 1; color: var(--acid); }
+
+    .logout-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      background: none;
+      border: 1px solid rgba(231, 76, 60, 0.3);
+      color: var(--error);
+      padding: 0.4rem 0.8rem;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .logout-btn:hover { background: rgba(231, 76, 60, 0.1); border-color: var(--error); }
+
+    /* ── MAIN CONTENT ─────────────────────────────────── */
+    .main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    .page-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-title em { font-style: normal; color: var(--acid); }
+
+    .page-desc {
+      font-size: 0.9rem;
+      font-weight: 300;
+      opacity: 0.4;
+      line-height: 1.6;
+      margin-bottom: 2.5rem;
+      max-width: 560px;
+    }
+
+    /* ── SECTION HEADERS ──────────────────────────────── */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 3rem 0 1.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .section-divider:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--acid);
+      opacity: 0.7;
+      white-space: nowrap;
+    }
+
+    .section-line { flex: 1; height: 1px; background: var(--border); }
+
+    /* ── CARD GRIDS ───────────────────────────────────── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    @media (min-width: 640px)  { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 960px)  { .cards-grid { grid-template-columns: repeat(3, 1fr); } }
+
+    .cards-grid-hero {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      max-width: 480px;
+    }
+
+    /* ── MEDIA CARD (images + videos) ─────────────────── */
+    .media-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+
+    .media-card:hover { border-color: var(--border-hover); }
+
+    .media-card-preview {
+      position: relative;
+      width: 100%;
+      background: var(--mid);
+      overflow: hidden;
+    }
+
+    .media-card-preview.square   { aspect-ratio: 1 / 1; }
+    .media-card-preview.portrait { aspect-ratio: 9 / 16; max-height: 350px; }
+    .media-card-preview.video-landscape { aspect-ratio: 9 / 16; max-height: 300px; }
+
+    .media-card-preview img,
+    .media-card-preview video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s;
+    }
+
+    .media-card:hover .media-card-preview img,
+    .media-card:hover .media-card-preview video {
+      transform: scale(1.03);
+    }
+
+    .media-card-preview .badge {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.6rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.5rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.5rem;
+      border-radius: 2px;
+      z-index: 2;
+    }
+
+    .badge-modified { background: var(--acid); color: var(--black); }
+    .badge-default  { background: rgba(240, 237, 230, 0.08); color: var(--white); opacity: 0.5; }
+
+    /* Play icon overlay for videos */
+    .video-play-icon {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+    }
+
+    .media-card:hover .video-play-icon { opacity: 0; }
+
+    .video-play-icon::after {
+      content: '▶';
+      font-size: 2rem;
+      color: var(--white);
+      background: rgba(6, 6, 6, 0.5);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-left: 4px;
+    }
+
+    .media-card-body { padding: 1.2rem; }
+
+    .media-card-label {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.4rem;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.3rem;
+    }
+
+    .media-card-desc {
+      font-size: 0.78rem;
+      font-weight: 300;
+      opacity: 0.4;
+      line-height: 1.5;
+      margin-bottom: 0.8rem;
+    }
+
+    .media-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      padding: 0.2rem 0.5rem;
+      background: rgba(223, 174, 64, 0.08);
+      color: var(--acid);
+      border-radius: 2px;
+    }
+
+    .meta-tag-video {
+      background: rgba(64, 160, 223, 0.12);
+      color: #40a0df;
+    }
+
+    .meta-date {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      opacity: 0.3;
+    }
+
+    /* ── UPLOAD AREA ──────────────────────────────────── */
+    .upload-area {
+      position: relative;
+      border: 1px dashed rgba(240, 237, 230, 0.12);
+      padding: 0.8rem;
+      text-align: center;
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+    }
+
+    .upload-area:hover,
+    .upload-area.dragover {
+      border-color: var(--acid);
+      background: rgba(223, 174, 64, 0.03);
+    }
+
+    .upload-area input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--acid);
+      pointer-events: none;
+    }
+
+    .upload-hint {
+      font-size: 0.65rem;
+      opacity: 0.25;
+      margin-top: 0.3rem;
+      pointer-events: none;
+    }
+
+    /* ── TEXT EDITOR (artist name) ─────────────────────── */
+    .text-editor {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .text-editor-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--acid);
+      opacity: 0.7;
+      margin-bottom: 0.5rem;
+    }
+
+    .text-editor-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .text-editor-input {
+      flex: 1;
+      background: rgba(240, 237, 230, 0.04);
+      border: 1px solid var(--border);
+      color: var(--white);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem;
+      letter-spacing: 0.08em;
+      padding: 0.6rem 0.8rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .text-editor-input:focus { border-color: var(--acid); }
+    .text-editor-input::placeholder { opacity: 0.2; }
+
+    .text-editor-btn {
+      background: var(--acid);
+      color: var(--black);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.6rem 1rem;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+
+    .text-editor-btn:hover { background: var(--acid2); }
+
+    .text-editor-hint {
+      font-size: 0.65rem;
+      opacity: 0.25;
+      margin-top: 0.4rem;
+    }
+
+    /* ── ACTION BUTTONS ───────────────────────────────── */
+    .card-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.8rem;
+    }
+
+    .btn-restore {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: none;
+      border: 1px solid rgba(240, 237, 230, 0.1);
+      color: var(--white);
+      opacity: 0.4;
+      padding: 0.4rem 0.7rem;
+      cursor: pointer;
+      transition: opacity 0.2s, border-color 0.2s;
+    }
+
+    .btn-restore:hover { opacity: 0.8; border-color: rgba(240, 237, 230, 0.3); }
+
+    /* ── TOAST ─────────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--dark);
+      border: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      font-size: 0.85rem;
+      z-index: 9999;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+      max-width: 360px;
+    }
+
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.error   { border-left: 3px solid var(--error); }
+
+    /* ── UPLOAD PROGRESS OVERLAY ──────────────────────── */
+    .upload-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(6, 6, 6, 0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.8rem;
+      z-index: 10;
+    }
+
+    .spinner {
+      width: 30px;
+      height: 30px;
+      border: 2px solid rgba(223, 174, 64, 0.2);
+      border-top-color: var(--acid);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    .upload-progress-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      opacity: 0.5;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── RESPONSIVE ───────────────────────────────────── */
+    @media (min-width: 768px) {
+      .topbar { padding: 1rem 2.5rem; }
+      .main { padding: 2.5rem 2.5rem 4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ LOGIN SCREEN ══════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">FAN</div>
+    <div class="login-sub">Panel de Administración</div>
+    <input type="text" id="loginUser" class="login-field" placeholder="Usuario" autocomplete="username" />
+    <input type="password" id="loginPass" class="login-field" placeholder="Contraseña" autocomplete="current-password" />
+    <button class="login-btn" id="loginBtn">Entrar</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ═══ DASHBOARD ═════════════════════════════════════ -->
+<div id="dashboard">
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">FAN</div>
+      <span class="topbar-tag">Gestión de Contenido</span>
+    </div>
+    <div class="topbar-actions">
+      <a href="/" target="_blank" class="topbar-link">Ver Web</a>
+      <button class="logout-btn" id="logoutBtn">Salir</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <h1 class="page-title">Gestión de<br><em>Contenido</em></h1>
+    <p class="page-desc">
+      Subí nuevas imágenes o videos y se actualizan automáticamente en la web.
+      Cada tarjeta muestra dónde aparece el contenido y el tamaño recomendado.
+    </p>
+
+    <!-- HERO SECTION -->
+    <div class="section-divider">
+      <span class="section-label">Header Principal</span>
+      <div class="section-line"></div>
+    </div>
+    <div class="cards-grid-hero" id="heroGrid"></div>
+
+    <!-- BOOKING FLYERS SECTION -->
+    <div class="section-divider">
+      <span class="section-label">Flyers de Booking (por día)</span>
+      <div class="section-line"></div>
+    </div>
+    <div class="cards-grid" id="bookingGrid"></div>
+
+    <!-- WEEKLY VIDEOS SECTION -->
+    <div class="section-divider">
+      <span class="section-label">Videos — Weekly Agenda</span>
+      <div class="section-line"></div>
+    </div>
+    <div class="cards-grid" id="videosGrid"></div>
+  </main>
+</div>
+
+<!-- ═══ TOAST ═════════════════════════════════════════ -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ────────────────────────────────────────────
+let mediaSlots = []
+let texts = {}
+
+// ── DOM refs ─────────────────────────────────────────
+const loginScreen = document.getElementById('loginScreen')
+const dashboard   = document.getElementById('dashboard')
+const loginBtn    = document.getElementById('loginBtn')
+const loginUser   = document.getElementById('loginUser')
+const loginPass   = document.getElementById('loginPass')
+const loginError  = document.getElementById('loginError')
+const logoutBtn   = document.getElementById('logoutBtn')
+const heroGrid    = document.getElementById('heroGrid')
+const bookingGrid = document.getElementById('bookingGrid')
+const videosGrid  = document.getElementById('videosGrid')
+const toast       = document.getElementById('toast')
+
+// ── Toast ────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  toast.textContent = msg
+  toast.className = `toast ${type} show`
+  clearTimeout(toast._timer)
+  toast._timer = setTimeout(() => toast.classList.remove('show'), 3500)
+}
+
+// ── API helpers ──────────────────────────────────────
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...opts.headers }
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Error del servidor')
+  return data
+}
+
+// ── Auth ─────────────────────────────────────────────
+async function checkAuth() {
+  try {
+    const data = await api('/api/me')
+    if (data.authenticated) showDashboard()
+  } catch (_) {}
+}
+
+async function login() {
+  const user = loginUser.value.trim()
+  const pass = loginPass.value
+  if (!user || !pass) { loginError.textContent = 'Completá ambos campos'; return }
+  loginBtn.textContent = 'Verificando...'
+  loginBtn.disabled = true
+  try {
+    await api('/api/login', { method: 'POST', body: JSON.stringify({ user, pass }) })
+    showDashboard()
+  } catch (e) { loginError.textContent = e.message }
+  finally { loginBtn.textContent = 'Entrar'; loginBtn.disabled = false }
+}
+
+async function logout() {
+  await api('/api/logout', { method: 'POST' })
+  dashboard.style.display = 'none'
+  loginScreen.style.display = 'flex'
+  loginPass.value = ''
+  loginError.textContent = ''
+}
+
+async function showDashboard() {
+  loginScreen.style.display = 'none'
+  dashboard.style.display = 'block'
+  await loadMedia()
+}
+
+// ── Load media ───────────────────────────────────────
+async function loadMedia() {
+  try {
+    const data = await api('/api/media')
+    mediaSlots = data.slots
+    texts = data.texts || {}
+    renderAll()
+  } catch (e) {
+    showToast('Error cargando contenido: ' + e.message, 'error')
+  }
+}
+
+// ── Render ───────────────────────────────────────────
+function renderAll() {
+  heroGrid.innerHTML = ''
+  bookingGrid.innerHTML = ''
+  videosGrid.innerHTML = ''
+
+  mediaSlots.forEach(slot => {
+    const card = createCard(slot)
+    if (slot.section === 'hero')          heroGrid.appendChild(card)
+    else if (slot.section === 'booking')  bookingGrid.appendChild(card)
+    else if (slot.section === 'weekly_videos') videosGrid.appendChild(card)
+  })
+}
+
+function createCard(slot) {
+  const card = document.createElement('div')
+  card.className = 'media-card'
+  card.id = `card-${slot.id}`
+
+  const isVideo = slot.type === 'video'
+  const isPortrait = slot.section === 'booking'
+
+  let aspectClass = 'square'
+  if (isPortrait) aspectClass = 'portrait'
+  else if (isVideo) aspectClass = 'video-landscape'
+
+  const dateStr = slot.updatedAt
+    ? new Date(slot.updatedAt).toLocaleString('es-AR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      })
+    : null
+
+  const accept = isVideo ? 'video/mp4,video/quicktime,video/webm' : 'image/jpeg,image/png,image/webp'
+  const maxSize = isVideo ? '50MB' : '15MB'
+  const uploadWord = isVideo ? 'video' : 'imagen'
+  const replaceWord = slot.hasUpload ? `Reemplazar ${uploadWord}` : `Subir ${uploadWord}`
+
+  // Preview: video or image
+  let previewHTML
+  if (isVideo) {
+    previewHTML = `
+      <video src="${slot.previewUrl}" muted loop playsinline preload="metadata"
+             onerror="this.style.opacity='0.15'"></video>
+      <div class="video-play-icon"></div>
+    `
+  } else {
+    previewHTML = `
+      <img src="${slot.previewUrl}" alt="${slot.label}" loading="lazy"
+           onerror="this.style.opacity='0.15'" />
+    `
+  }
+
+  // Artist name editor (only for hero/mainevent)
+  let textEditorHTML = ''
+  if (slot.id === 'mainevent') {
+    const currentName = texts.artist_name || 'LUKE ALEXANDER'
+    textEditorHTML = `
+      <div class="text-editor">
+        <div class="text-editor-label">Nombre del Artista / DJ</div>
+        <div class="text-editor-row">
+          <input type="text" class="text-editor-input" id="artistNameInput"
+                 value="${currentName}" placeholder="Nombre del artista" />
+          <button class="text-editor-btn" onclick="saveArtistName()">Guardar</button>
+        </div>
+        <div class="text-editor-hint">Este nombre aparece en el Hero y en el ticker dorado del Main Event</div>
+      </div>
+    `
+  }
+
+  card.innerHTML = `
+    <div class="media-card-preview ${aspectClass}">
+      ${previewHTML}
+      <span class="badge ${slot.hasUpload ? 'badge-modified' : 'badge-default'}">
+        ${slot.hasUpload ? 'Modificado' : 'Original'}
+      </span>
+    </div>
+    <div class="media-card-body">
+      <div class="media-card-label">${slot.label}</div>
+      <div class="media-card-desc">${slot.description}</div>
+      <div class="media-card-meta">
+        <span class="meta-tag">${slot.width} x ${slot.height} px</span>
+        <span class="meta-tag ${isVideo ? 'meta-tag-video' : ''}">${slot.format}</span>
+        ${dateStr ? `<span class="meta-date">Actualizado: ${dateStr}</span>` : ''}
+      </div>
+      <div class="upload-area" id="drop-${slot.id}">
+        <input type="file" accept="${accept}"
+               onchange="handleUpload('${slot.id}', this.files[0])" />
+        <div class="upload-label">${replaceWord}</div>
+        <div class="upload-hint">Arrastrá o hacé click — máx ${maxSize}</div>
+      </div>
+      ${slot.hasUpload ? `
+        <div class="card-actions">
+          <button class="btn-restore" onclick="restoreOriginal('${slot.id}')">
+            Restaurar original
+          </button>
+        </div>
+      ` : ''}
+      ${textEditorHTML}
+    </div>
+  `
+
+  // Video hover-to-play
+  if (isVideo) {
+    const videoEl = card.querySelector('video')
+    card.addEventListener('mouseenter', () => { videoEl.play().catch(() => {}) })
+    card.addEventListener('mouseleave', () => { videoEl.pause(); videoEl.currentTime = 0 })
+  }
+
+  // Drag & drop
+  const dropArea = card.querySelector(`#drop-${slot.id}`)
+  dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.classList.add('dragover') })
+  dropArea.addEventListener('dragleave', () => { dropArea.classList.remove('dragover') })
+  dropArea.addEventListener('drop', (e) => {
+    e.preventDefault()
+    dropArea.classList.remove('dragover')
+    if (e.dataTransfer.files.length) handleUpload(slot.id, e.dataTransfer.files[0])
+  })
+
+  return card
+}
+
+// ── Upload ───────────────────────────────────────────
+async function handleUpload(slotId, file) {
+  if (!file) return
+
+  const slot = mediaSlots.find(s => s.id === slotId)
+  const isVideo = slot && slot.type === 'video'
+  const maxSize = isVideo ? 50 : 15
+
+  // Validate type
+  if (isVideo && !file.type.startsWith('video/')) {
+    showToast('Solo se permiten archivos de video', 'error'); return
+  }
+  if (!isVideo && !file.type.startsWith('image/')) {
+    showToast('Solo se permiten archivos de imagen', 'error'); return
+  }
+  if (file.size > maxSize * 1024 * 1024) {
+    showToast(`El archivo es demasiado grande (máx ${maxSize}MB)`, 'error'); return
+  }
+
+  const card = document.getElementById(`card-${slotId}`)
+  const preview = card.querySelector('.media-card-preview')
+
+  const overlay = document.createElement('div')
+  overlay.className = 'upload-overlay'
+  overlay.innerHTML = `<div class="spinner"></div><span class="upload-progress-text">Subiendo${isVideo ? ' video' : ''}...</span>`
+  preview.appendChild(overlay)
+
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await fetch(`/api/upload/${slotId}`, { method: 'POST', body: formData })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error)
+
+    showToast(data.message)
+    await loadMedia()
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error')
+  } finally {
+    overlay.remove()
+  }
+}
+
+// ── Restore original ─────────────────────────────────
+async function restoreOriginal(slotId) {
+  const slot = mediaSlots.find(s => s.id === slotId)
+  if (!slot) return
+  if (!confirm(`¿Restaurar "${slot.label}" al original?`)) return
+
+  try {
+    const res = await fetch(`/api/upload/${slotId}`, { method: 'DELETE' })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error)
+    showToast(data.message)
+    await loadMedia()
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error')
+  }
+}
+
+// ── Save artist name ─────────────────────────────────
+async function saveArtistName() {
+  const input = document.getElementById('artistNameInput')
+  const name = input.value.trim()
+  if (!name) { showToast('El nombre no puede estar vacío', 'error'); return }
+
+  try {
+    await api('/api/texts', {
+      method: 'POST',
+      body: JSON.stringify({ key: 'artist_name', value: name })
+    })
+    texts.artist_name = name
+    showToast(`Nombre del artista actualizado a "${name}"`)
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error')
+  }
+}
+
+// ── Events ───────────────────────────────────────────
+loginBtn.addEventListener('click', login)
+loginPass.addEventListener('keydown', (e) => { if (e.key === 'Enter') login() })
+loginUser.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginPass.focus() })
+logoutBtn.addEventListener('click', logout)
+
+// ── Init ─────────────────────────────────────────────
+checkAuth()
+</script>
+</body>
+</html>

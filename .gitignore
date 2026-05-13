@@ -1,0 +1,22 @@
+# Dependencias
+node_modules/
+
+# Build (se genera con npm run build en el servidor)
+dist/
+
+# Variables de entorno y credenciales
+.env
+.env.local
+
+# Contenido subido desde el admin (vive en el servidor, no en git)
+uploads/
+
+# Datos en tiempo de ejecución (se crean solos en el servidor)
+data/texts.json
+
+# Admin panel Next.js (desarrollo, no va a producción)
+nightclub-admin/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
