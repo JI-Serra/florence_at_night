@@ -299,6 +299,48 @@
 
     .badge-modified { background: var(--acid); color: var(--black); }
     .badge-default  { background: rgba(240, 237, 230, 0.08); color: var(--white); opacity: 0.5; }
+    .badge-pending  { background: rgba(223, 174, 64, 0.15); color: var(--acid); border: 1px solid rgba(223, 174, 64, 0.4); }
+
+    /* ── SUBMIT BAR ────────────────────────────────────── */
+    .submit-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(13, 13, 13, 0.97);
+      border-top: 1px solid rgba(223, 174, 64, 0.25);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      z-index: 1000;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(8px);
+    }
+    .submit-bar.visible { transform: translateY(0); }
+    .submit-bar-info {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0.5;
+    }
+    .submit-bar-btn {
+      background: var(--acid);
+      color: var(--black);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.8rem 1.8rem;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .submit-bar-btn:hover:not(:disabled) { background: var(--acid2); }
+    .submit-bar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* Play icon overlay for videos */
     .video-play-icon {
@@ -613,6 +655,12 @@
   </main>
 </div>
 
+<!-- ═══ SUBMIT BAR ════════════════════════════════════ -->
+<div class="submit-bar" id="submitBar">
+  <span class="submit-bar-info" id="submitBarInfo"></span>
+  <button class="submit-bar-btn" id="submitBarBtn" onclick="submitAllChanges()">Enviar cambios</button>
+</div>
+
 <!-- ═══ TOAST ═════════════════════════════════════════ -->
 <div class="toast" id="toast"></div>
 
@@ -620,6 +668,7 @@
 // ── State ────────────────────────────────────────────
 let mediaSlots = []
 let texts = {}
+let pendingUploads = {} // slotId → { file, objectUrl }
 
 // ── DOM refs ─────────────────────────────────────────
 const loginScreen = document.getElementById('loginScreen')
@@ -632,7 +681,10 @@ const logoutBtn   = document.getElementById('logoutBtn')
 const heroGrid    = document.getElementById('heroGrid')
 const bookingGrid = document.getElementById('bookingGrid')
 const videosGrid  = document.getElementById('videosGrid')
-const toast       = document.getElementById('toast')
+const toast        = document.getElementById('toast')
+const submitBar    = document.getElementById('submitBar')
+const submitBarInfo = document.getElementById('submitBarInfo')
+const submitBarBtn  = document.getElementById('submitBarBtn')
 
 // ── Toast ────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -708,10 +760,20 @@ function renderAll() {
 
   mediaSlots.forEach(slot => {
     const card = createCard(slot)
-    if (slot.section === 'hero')          heroGrid.appendChild(card)
-    else if (slot.section === 'booking')  bookingGrid.appendChild(card)
+    if (slot.section === 'hero')               heroGrid.appendChild(card)
+    else if (slot.section === 'booking')       bookingGrid.appendChild(card)
     else if (slot.section === 'weekly_videos') videosGrid.appendChild(card)
   })
+
+  // Re-apply local previews for any pending uploads (survives server re-renders)
+  for (const [slotId, { objectUrl }] of Object.entries(pendingUploads)) {
+    const card = document.getElementById(`card-${slotId}`)
+    if (!card) continue
+    const mediaEl = card.querySelector('.media-card-preview img') || card.querySelector('.media-card-preview video')
+    if (mediaEl) mediaEl.src = objectUrl
+    const badge = card.querySelector('.badge')
+    if (badge) { badge.textContent = 'Pendiente'; badge.className = 'badge badge-pending' }
+  }
 }
 
 function createCard(slot) {
@@ -822,48 +884,99 @@ function createCard(slot) {
   return card
 }
 
-// ── Upload ───────────────────────────────────────────
-async function handleUpload(slotId, file) {
+// ── Queue upload locally (preview sin enviar al servidor) ──────────
+function handleUpload(slotId, file) {
   if (!file) return
 
   const slot = mediaSlots.find(s => s.id === slotId)
-  const isVideo = slot && slot.type === 'video'
-  const maxSize = isVideo ? 50 : 15
+  if (!slot) return
+  const isVideo = slot.type === 'video'
+  const maxMB = isVideo ? 50 : 15
 
-  // Validate type
-  if (isVideo && !file.type.startsWith('video/')) {
+  if (isVideo && !file.type.startsWith('video/') && file.type !== 'application/octet-stream') {
     showToast('Solo se permiten archivos de video', 'error'); return
   }
   if (!isVideo && !file.type.startsWith('image/')) {
     showToast('Solo se permiten archivos de imagen', 'error'); return
   }
-  if (file.size > maxSize * 1024 * 1024) {
-    showToast(`El archivo es demasiado grande (máx ${maxSize}MB)`, 'error'); return
+  if (file.size > maxMB * 1024 * 1024) {
+    showToast(`El archivo es demasiado grande (máx ${maxMB}MB)`, 'error'); return
   }
 
+  // Revoke prev objectUrl if replacing a pending selection
+  if (pendingUploads[slotId]?.objectUrl) URL.revokeObjectURL(pendingUploads[slotId].objectUrl)
+
+  const objectUrl = URL.createObjectURL(file)
+  pendingUploads[slotId] = { file, objectUrl }
+
+  // Show local preview immediately — no network call needed
   const card = document.getElementById(`card-${slotId}`)
-  const preview = card.querySelector('.media-card-preview')
-
-  const overlay = document.createElement('div')
-  overlay.className = 'upload-overlay'
-  overlay.innerHTML = `<div class="spinner"></div><span class="upload-progress-text">Subiendo${isVideo ? ' video' : ''}...</span>`
-  preview.appendChild(overlay)
-
-  try {
-    const formData = new FormData()
-    formData.append('file', file)
-
-    const res = await fetch(`/api/upload/${slotId}`, { method: 'POST', body: formData })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error)
-
-    showToast(data.message)
-    await loadMedia()
-  } catch (e) {
-    showToast('Error: ' + e.message, 'error')
-  } finally {
-    overlay.remove()
+  if (card) {
+    const mediaEl = card.querySelector('.media-card-preview img') || card.querySelector('.media-card-preview video')
+    if (mediaEl) mediaEl.src = objectUrl
+    const badge = card.querySelector('.badge')
+    if (badge) { badge.textContent = 'Pendiente'; badge.className = 'badge badge-pending' }
   }
+
+  updateSubmitBar()
+}
+
+// ── Submit bar state ─────────────────────────────────
+function updateSubmitBar() {
+  const count = Object.keys(pendingUploads).length
+  const visible = count > 0
+  submitBar.classList.toggle('visible', visible)
+  submitBarInfo.textContent = `${count} imagen${count !== 1 ? 'es' : ''} pendiente${count !== 1 ? 's' : ''}`
+  document.querySelector('.main').style.paddingBottom = visible ? '6rem' : ''
+  toast.style.bottom = visible ? '5.5rem' : ''
+}
+
+// ── Send all pending uploads to server ───────────────
+async function submitAllChanges() {
+  const slotIds = Object.keys(pendingUploads)
+  if (slotIds.length === 0) return
+
+  submitBarBtn.disabled = true
+  submitBarBtn.textContent = 'Enviando...'
+
+  let done = 0
+  const errors = []
+
+  for (const slotId of slotIds) {
+    const { file, objectUrl } = pendingUploads[slotId]
+    const card = document.getElementById(`card-${slotId}`)
+    const preview = card?.querySelector('.media-card-preview')
+    const slot = mediaSlots.find(s => s.id === slotId)
+    const isVideo = slot?.type === 'video'
+
+    const overlay = document.createElement('div')
+    overlay.className = 'upload-overlay'
+    overlay.innerHTML = `<div class="spinner"></div><span class="upload-progress-text">Subiendo${isVideo ? ' video' : ''}...</span>`
+    preview?.appendChild(overlay)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const r = await fetch(`/api/upload/${slotId}`, { method: 'POST', body: formData })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error)
+      URL.revokeObjectURL(objectUrl)
+      delete pendingUploads[slotId]
+      done++
+    } catch (e) {
+      errors.push(`"${slot?.label || slotId}": ${e.message}`)
+    } finally {
+      overlay?.remove()
+    }
+  }
+
+  if (done > 0) showToast(`${done} imagen${done !== 1 ? 'es' : ''} guardada${done !== 1 ? 's' : ''} correctamente`)
+  if (errors.length > 0) showToast('Error al guardar: ' + errors.join(' | '), 'error')
+
+  await loadMedia()
+  updateSubmitBar()
+  submitBarBtn.disabled = false
+  submitBarBtn.textContent = 'Enviar cambios'
 }
 
 // ── Restore original ─────────────────────────────────

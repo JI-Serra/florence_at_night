@@ -389,10 +389,15 @@ app.post('/api/upload/:slotId', requireAuth, (req, res) => {
       const msg = err instanceof multer.MulterError
         ? (err.code === 'LIMIT_FILE_SIZE' ? 'El archivo es demasiado grande (máx 50MB)' : err.message)
         : err.message
+      console.error(`[upload] ERROR ${req.params.slotId}:`, msg)
       return res.status(400).json({ error: msg })
     }
-    if (!req.file) return res.status(400).json({ error: 'No se recibió ningún archivo' })
+    if (!req.file) {
+      console.error(`[upload] NO FILE received for ${req.params.slotId}`)
+      return res.status(400).json({ error: 'No se recibió ningún archivo' })
+    }
 
+    console.log(`[upload] OK ${req.params.slotId} → ${req.file.path} (${req.file.size} bytes)`)
     const mediaWord = slot.type === 'video' ? 'Video' : 'Imagen'
     res.json({
       ok: true,
