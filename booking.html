@@ -746,14 +746,14 @@
 
       function showFlyer(clubKey, dayKey) {
         let src = "";
-        if (dayKey === "mon") src = "/LUNES.jpeg";
-        else if (dayKey === "tue") src = "/MARTES.jpeg";
-        else if (dayKey === "wed") src = "/MIERCOLES.jpeg";
-        else if (dayKey === "thu") src = "/JUEVES.jpeg";
+        if (dayKey === "mon") src = "/media/lunes";
+        else if (dayKey === "tue") src = "/media/martes";
+        else if (dayKey === "wed") src = "/media/miercoles";
+        else if (dayKey === "thu") src = "/media/jueves";
         else if (dayKey === "fri") {
-          src = clubKey === "xo" ? "/VIERNES%20XO.png" : "/VIERNES%20SPACE.jpeg";
+          src = clubKey === "xo" ? "/media/viernes_xo" : "/media/viernes_space";
         }
-        else if (dayKey === "sat") src = "/Sabado.png";
+        else if (dayKey === "sat") src = "/media/sabado";
         
         if (src) {
           flyerImg.src = src;
