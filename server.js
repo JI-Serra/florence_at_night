@@ -321,6 +321,24 @@ function saveTexts(data) {
   writeFileSync(TEXT_CONFIG_PATH, JSON.stringify(data, null, 2), 'utf-8')
 }
 
+// Diagnostic endpoint — check server paths and file visibility
+app.get('/api/debug', requireAuth, (_req, res) => {
+  const uploadFiles = existsSync(UPLOADS_DIR) ? readdirSync(UPLOADS_DIR) : []
+  const videosDir = join(UPLOADS_DIR, 'videos weekly')
+  const videoFiles = existsSync(videosDir) ? readdirSync(videosDir) : []
+  res.json({
+    __dirname,
+    UPLOADS_DIR,
+    DIST_DIR,
+    slots: MEDIA_SLOTS.map(s => {
+      const uploadedPath = join(UPLOADS_DIR, s.filename)
+      return { id: s.id, filename: s.filename, uploadedPath, found: existsSync(uploadedPath) }
+    }),
+    upload_dir_files: uploadFiles,
+    videos_dir_files: videoFiles
+  })
+})
+
 // List all media slots with current status
 app.get('/api/media', requireAuth, (_req, res) => {
   const texts = loadTexts()

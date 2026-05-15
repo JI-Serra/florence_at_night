@@ -88,7 +88,8 @@
       "PowerShell(Get-ChildItem -Path \"C:\\\\dev\\\\Antigravity\\\\NightClub V1\" -Recurse -File -Depth 3 | Where-Object { $_.Name -match '\\\\.\\(js|html|css|md\\)$' } | Sort-Object FullName)",
       "PowerShell(Get-ChildItem -Path \"C:\\\\dev\\\\Antigravity\\\\NightClub V1\" -Recurse -Directory -Depth 2 | Where-Object { $_.Name -notmatch 'node_modules|dist' })",
       "PowerShell(Get-ChildItem -Path \"C:\\\\dev\\\\Antigravity\\\\NightClub V1\\\\nightclub-admin\" -Recurse -File | ForEach-Object { $_.FullName })",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\dev\\\\Antigravity\\\\NightClub V1\\\\public\" -Recurse -File | Select-Object -First 20 | ForEach-Object { $_.Name })"
+      "PowerShell(Get-ChildItem -Path \"C:\\\\dev\\\\Antigravity\\\\NightClub V1\\\\public\" -Recurse -File | Select-Object -First 20 | ForEach-Object { $_.Name })",
+      "Bash(dir *)"
     ]
   }
 }
