@@ -421,8 +421,31 @@ app.delete('/api/upload/:slotId', requireAuth, (req, res) => {
 // ── Serve admin panel ──────────────────────────────────────────────
 app.use('/admin', express.static(ADMIN_DIR))
 
-// ── Serve website: uploads first (overrides), then dist ────────────
-app.use(express.static(UPLOADS_DIR, { maxAge: 0 }))
+// ── Serve media files: uploads override dist, never cached ────────
+// Bypasses proxy-level caches (LiteSpeed, Apache mod_cache, etc.)
+// that would otherwise ignore the uploads/ override after caching a dist/ response.
+const MEDIA_EXTS = new Set(['.jpeg', '.jpg', '.png', '.webp', '.gif', '.mp4', '.mov', '.webm'])
+
+app.use((req, res, next) => {
+  const ext = extname(req.path).toLowerCase()
+  if (!MEDIA_EXTS.has(ext)) return next()
+
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+  res.setHeader('Surrogate-Control', 'no-store')
+  res.setHeader('Pragma', 'no-cache')
+  res.setHeader('Expires', '0')
+
+  const filePath = decodeURIComponent(req.path).slice(1)
+  const uploadedPath = join(UPLOADS_DIR, filePath)
+  if (existsSync(uploadedPath)) return res.sendFile(uploadedPath)
+
+  const distPath = join(DIST_DIR, filePath)
+  if (existsSync(distPath)) return res.sendFile(distPath)
+
+  next()
+})
+
+// ── Serve other static assets (JS, CSS, fonts) from dist/ ─────────
 app.use(express.static(DIST_DIR, { maxAge: '1d' }))
 
 // Fallback for SPA-like behavior (booking.html)
